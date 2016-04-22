@@ -13,6 +13,7 @@
     "bufferstreams": "^1.1.0",
     "gulp-util": "3.0.7",
     "mstranslator": "2.0.2",
+    "string_decoder": "^0.10.31",
     "through2": "2.0.1"
   }
 }

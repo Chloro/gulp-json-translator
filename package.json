@@ -8,13 +8,11 @@
   },
   "author": "Cory R. Maloy",
   "license": "ISC",
-  "devDependencies": {
-    "gulp": "3.9.1",
-    "gulp-util": "3.0.7",
+  "dependencies": {
     "async": "1.4.2",
+    "bufferstreams": "^1.1.0",
+    "gulp-util": "3.0.7",
     "mstranslator": "2.0.2",
-    "event-stream": "3.0.20",
-    "optimist": "0.6.0",
-    "xtend": "2.1.1"
+    "through2": "2.0.1"
   }
 }

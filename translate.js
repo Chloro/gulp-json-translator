@@ -1,91 +1,50 @@
+var through = require('through2');
 var gutil = require('gulp-util');
+var PluginError = gutil.PluginError;
 var c = gutil.colors;
-var es = require('event-stream');
-//var extend = require('xtend');
 var path = require('path');
-//var spawn = require('child_process').spawn;
-//var fork = require('child_process').fork;
 var fs = require('fs');
 var async = require('async');
 var msTranslator = require('mstranslator');
+var pluginName = require('./package.json').name;
+var BufferStreams = require("bufferstreams");
 
-//Example of options:
-// var options = {
-//   client: {
-//     clientId: 'example',
-//     clientSecret: 'example'
-//   },
-//   files: [
-//     {langFrom: 'en', langTo: 'de', fileInputPath: 'path/to/file.json'},
-//     {langFrom: 'en', langTo: 'fr', fileInputPath: 'path/to/file.json'}
-//   ],
-//   fileOutputPath: 'path/to/output/directory' //Will always be json file(s)
+// Example of configuration:
+// var configuration = {
+//   clientId: 'example',
+//   clientSecret: 'example',
+//   languages: ['fr', 'en', 'de', 'zh', 'ar',],
+//   masterLanguage: 'en'
 // };
 
-var jsonTranslate = function(options) {
-  //var child;
-  var files = options.files || [];
+module.exports = function(configuration) {
+  if (!configuration) {
+    throw new gutil.PluginError(pluginName, "No configuration supplied");
+  }
+  var langIndex = 0;
   var getClass = {}.toString;
-  var stream;
-
   var client = new msTranslator({
-    client_id: options.client.clientId,
-    client_secret: options.client.clientSecret
+    client_id: configuration.clientId,
+    client_secret: configuration.clientSecret
   }, true);
 
-  function makeTranslationCalls() {
-    gutil.log(c.yellow('Calling the ms-translate api...'));
-
-    var translateFiles = [];
-
-    // child = fork(translateFile(files[i]));
-    // child.on('exit', function(stuff) {
-    //   console.log('Child exist fork process number ' + i);
-    //   console.log(stuff);
-    //   //done(code);
-    // });
-
-    for (var i = 0; i <= files.length; i++) {
-      gutil.log('On the file number ' + i);
-      translateFiles.push(translateFile(files[i]));
-    }
-
-
-    async.series(translateFiles, function(error, res) {
-      if (error) {
-        gutil.log(c.red(error));
-        return;
-      } else {
-
-      }
-    });
-
-    // End the stream if it exists
-    if (stream) {
-      if (code) {
-        stream.emit('error', new gutil.PluginError('gulp-karma', 'karma exited with code ' + code));
-      }
-      else {
-        stream.emit('end');
-      }
-    }
-  }
-
-  function translateFile(file) {
+  function translateFile(file, buffer, opts) {
     var translateTasks = [];
     var params = {
       text: '',
-      from: file.langFrom,
-      to: file.langTo
+      from: configuration.masterLanguage,
+      to: configuration.languages[langIndex]
     };
 
-    var original = undefined;
-    var translated = undefined;
-    original = require(file.fileInputPath);
-    translated = JSON.parse(JSON.stringify(original));
+    // original = file.contents.toString('utf8');
+    // var original = file.contents; // might need ^ instead.
+    var original = buffer;
+    var translated = JSON.parse(JSON.stringify(original));
 
-    gutil.log(c.yellow('Starting translation of: ', file.fileInputPath));
-    gutil.log(c.yellow('From ' + file.langFrom + ' to ' + file.langTo));
+    gutil.log(c.yellow('Starting translation of: ', file.path));
+    gutil.log(c.yellow('From ' + configuration.masterLanguage + ' to ' + configuration.languages[langIndex]));
+
+    langIndex ++;
 
     // For each key in the original file add a translation async task
     Object.keys(original).forEach(function(key) {
@@ -123,38 +82,47 @@ var jsonTranslate = function(options) {
       }
     });
 
-    //Execute the translation tasks and save the resulting object to a JSON file
+    //Execute the translation tasks and send the buffered file downstream
     async.series(translateTasks, function(error, res) {
       if (error) {
         gutil.log(c.red(error));
         return;
       } else {
-       // fs.writeFile(translated_file_path, JSON.stringify(translated, null, 4), function(error) {
-        fs.writeFile(options.fileOutputPath + 'language-' + file.langTo + '_' + file.langTo.toUpperCase() + '.json', JSON.stringify(translated, null, 2), function(error) {
-          if (error) {
-            gutil.log(c.red("Error: ", error));
-          } else {
-            gutil.log(c.green("Translated file saved to: ", options.fileOutputPath));
-          }
-        });
+        return new Buffer(translated);
+        //return translated;
       }
     });
   }
 
-  function queueFile(file) {
-    if (file) {
-      gutil.log(c.yellow('Queueing file for translation: ', file.path));
-      files.push(file.path);
+  return through.obj(function (file, encoding, callback) {
+    if (file.isNull()) {
+      this.push(file);
+      callback(null, file);
+      return;
     }
-    else {
-      gutil.log(c.red('Got undefined file at: ', file.path));
-      stream.emit('error');
-      //stream.emit('error', new Error('Got undefined file'));
+    if (file.isStream()) {
+      this.emit('error', new PluginError(pluginName, 'Streams not supported!'));
+    } else if (file.isBuffer()) {
+      try {
+        file.contents = translateFile(file);
+      } catch (error) {
+        this.emit('error', new PluginError(pluginName, 'Buffer Error: ', error));
+        return callback();
+      }
+      // Dealing with stream input.
+    } else {
+      file.contents = file.contents.pipe(new BufferStreams(function(error, buffer, callback) {
+        if (error) return callback(new gutil.PluginError(pluginName, error));
+        try {
+          var transformed = translateFile(file, buffer, opts)
+        } catch (error) {
+          return callback(error);
+        }
+        callback(null, transformed);
+      }));
     }
-  }
 
-  stream = es.through(queueFile, makeTranslationCalls);
-  return stream;
+    this.push(file);
+    callback();
+  });
 };
-
-module.exports = jsonTranslate;

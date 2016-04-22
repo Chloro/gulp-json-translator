@@ -1,0 +1,20 @@
+{
+  "name": "gulp-json-translator",
+  "version": "1.0.0",
+  "description": "Module used to translate json files into another language using the microsoft translator api.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Cory R. Maloy",
+  "license": "ISC",
+  "devDependencies": {
+    "gulp": "3.9.1",
+    "gulp-util": "3.0.7",
+    "async": "1.4.2",
+    "mstranslator": "2.0.2",
+    "event-stream": "3.0.20",
+    "optimist": "0.6.0",
+    "xtend": "2.1.1"
+  }
+}

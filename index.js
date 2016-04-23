@@ -7,6 +7,7 @@ var fs = require('fs');
 var async = require('async');
 var msTranslator = require('mstranslator');
 var pluginName = require('./package.json').name;
+var File = require('vinyl');
 //var BufferStreams = require("bufferstreams");
 
 // Example of configuration:
@@ -37,9 +38,13 @@ module.exports = function(configuration) {
       to: configuration.languages[langIndex]
     };
 
-    var original = file.contents.toString('utf8');
+    // var original;
+    // var translated;
     //var translated = JSON.parse(JSON.stringify(original));
-    var translated = file.contents.toString('utf8');
+    var original = JSON.parse(file.contents.toString('utf8'));
+    var translated = JSON.parse(file.contents.toString('utf8'));
+    // var original = JSON.parse(JSON.stringify(file.contents.toString('utf8')));
+    // var translated = JSON.parse(JSON.stringify(file.contents.toString('utf8')));
 
     gutil.log(c.yellow('Starting translation of: ', file.path));
     gutil.log(c.yellow('From ' + configuration.masterLanguage + ' to ' + configuration.languages[langIndex]));
@@ -88,8 +93,7 @@ module.exports = function(configuration) {
         gutil.log(c.red(error));
         return;
       } else {
-        return new Buffer(translated);
-        //return translated;
+        return translated;
       }
     });
   }
@@ -104,14 +108,45 @@ module.exports = function(configuration) {
       this.emit('error', new PluginError(pluginName, 'Streams not supported!'));
     } else if (file.isBuffer()) {
       try {
-        file.contents = translateFile(file);
+        //translateFile(file); //Writes wrong file.
+        //file.contents = translateFile(file); //Writes wrong file.
+        //file.contents = new Buffer(translateFile(file)); //Writes no file.
+
+        for (var i = 0; i <= configuration.languages.length; i++) {
+
+          //var sourceMapPath = path.join(file.base, destPath, file.relative) + '.map';
+
+          // console.log(file.cwd);
+          // console.log(file.base);
+          // console.log(file.path);
+          // console.log(path.basename(file.path));
+          // console.log(file.relative);
+
+          console.log('gets here..............[1]');
+
+          var translatedFile = new File({
+            cwd: file.cwd,
+            base: file.base,
+            path: path.join(file.base, configuration.dest, file.relative) + '.json',
+            // contents: new Buffer(JSON.stringify(translateFile(file))),
+            contents: new Buffer(translateFile(file))
+          });
+
+          console.log('gets here..............[2]');
+
+          console.log(translatedFile);
+
+          console.log('gets here..............[3]');
+
+          this.push(translatedFile);
+        }
       } catch (error) {
         this.emit('error', error);
         return callback();
       }
     }
 
-    this.push(file);
+    //this.push(file);
     callback();
   });
 };

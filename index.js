@@ -9,7 +9,20 @@ var msTranslator = require('mstranslator');
 // var configuration = {
 //   clientId: 'example',
 //   clientSecret: 'example',
-//   languages: ['fr', 'en', 'de', 'zh', 'ar',],
+//   locales: [
+//       {
+//         name: 'Egyptian Arabic',
+//         localeCode: 'ar-eg',
+//         langCode: 'ar_EG',
+//         lang: 'ar'
+//       },
+//       {
+//         name: 'German',
+//         localeCode: 'de-de',
+//         langCode: 'de_DE',
+//         lang: 'de'
+//       }
+//   ],
 //   masterLanguage: 'en',
 //   src: '/assets/languages/strings.json',
 //   dest: '/assets/languages/'
@@ -26,18 +39,18 @@ module.exports = function(configuration) {
     client_secret: configuration.clientSecret
   }, true);
 
-  function translateFile(fileContents, language) {
+  function translateFile(fileContents, locale) {
     var translateTasks = [];
     var params = {
       text: '',
       from: configuration.masterLanguage,
-      to: language
+      to: locale.lang
     };
 
     var original = JSON.parse(fileContents.toString('utf8'));
     var translated = JSON.parse(fileContents.toString('utf8'));
     gutil.log(c.yellow('Starting translation of: ', configuration.src));
-    gutil.log(c.yellow('From ' + configuration.masterLanguage + ' to ' + language));
+    gutil.log(c.yellow('From ' + configuration.masterLanguage + ' to ' + locale.lang));
 
     // For each key in the original file add a translation task
     Object.keys(original).forEach(function(key) {
@@ -80,7 +93,7 @@ module.exports = function(configuration) {
         gutil.log(c.red(error));
         return;
       } else {
-        var filesource = configuration.dest + '/language-' + language + '_' + language.toUpperCase() + '.json';
+        var filesource = configuration.dest + '/language-' + locale.langCode + '.json';
         fs.writeFile(filesource, JSON.stringify(translated, null, 2), function(error) {
           if (error) {
             gutil.log(c.red('Error: ', error));
@@ -99,8 +112,8 @@ module.exports = function(configuration) {
     }
     try {
       fs.readFile(configuration.src, 'utf8', function(error, fileContents){
-        async.eachSeries(configuration.languages, function(language, callback) {
-          translateFile(fileContents, language);
+        async.eachSeries(configuration.locales, function(locale, callback) {
+          translateFile(fileContents, locale);
           callback();
         });
       });

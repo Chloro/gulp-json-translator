@@ -1,57 +1,45 @@
-var through = require('through2');
-var gutil = require('gulp-util');
-var PluginError = gutil.PluginError;
-var c = gutil.colors;
-var path = require('path');
-var fs = require('fs');
 var async = require('async');
-var msTranslator = require('mstranslator');
+var fs = require('fs');
+var gutil = require('gulp-util');
+var c = gutil.colors;
 var pluginName = require('./package.json').name;
-var File = require('vinyl');
-//var BufferStreams = require("bufferstreams");
+var msTranslator = require('mstranslator');
 
 // Example of configuration:
 // var configuration = {
 //   clientId: 'example',
 //   clientSecret: 'example',
 //   languages: ['fr', 'en', 'de', 'zh', 'ar',],
-//   masterLanguage: 'en'
+//   masterLanguage: 'en',
+//   src: '/assets/languages/strings.json',
+//   dest: '/assets/languages/'
 // };
 
 module.exports = function(configuration) {
-  if (!configuration) {
-    throw new gutil.PluginError(pluginName, "No configuration supplied");
+  if (!configuration.clientId || !configuration.clientSecret) {
+    throw new gutil.PluginError(pluginName, "Invalid configuration supplied");
   }
 
-  var langIndex = 0;
   var getClass = {}.toString;
   var client = new msTranslator({
     client_id: configuration.clientId,
     client_secret: configuration.clientSecret
   }, true);
 
-  function translateFile(file) {
+  function translateFile(fileContents, language) {
     var translateTasks = [];
     var params = {
       text: '',
       from: configuration.masterLanguage,
-      to: configuration.languages[langIndex]
+      to: language
     };
 
-    // var original;
-    // var translated;
-    //var translated = JSON.parse(JSON.stringify(original));
-    var original = JSON.parse(file.contents.toString('utf8'));
-    var translated = JSON.parse(file.contents.toString('utf8'));
-    // var original = JSON.parse(JSON.stringify(file.contents.toString('utf8')));
-    // var translated = JSON.parse(JSON.stringify(file.contents.toString('utf8')));
+    var original = JSON.parse(fileContents.toString('utf8'));
+    var translated = JSON.parse(fileContents.toString('utf8'));
+    gutil.log(c.yellow('Starting translation of: ', configuration.src));
+    gutil.log(c.yellow('From ' + configuration.masterLanguage + ' to ' + language));
 
-    gutil.log(c.yellow('Starting translation of: ', file.path));
-    gutil.log(c.yellow('From ' + configuration.masterLanguage + ' to ' + configuration.languages[langIndex]));
-
-    langIndex ++;
-
-    // For each key in the original file add a translation async task
+    // For each key in the original file add a translation task
     Object.keys(original).forEach(function(key) {
       if (getClass.call(original[key]) === '[object Object]') {
         // If namespaced key translate the nested keys
@@ -64,8 +52,8 @@ module.exports = function(configuration) {
                 callback(error);
               }
               translated[key][nested] = data;
-              gutil.log(c.green("ORIGINAL", original[key][nested]));
-              gutil.log(c.green("TRANSLATED", translated[key][nested]));
+              gutil.log(c.blue("[orignal string]:", original[key][nested]));
+              gutil.log(c.yellow("[translated string]:", translated[key][nested]));
               callback();
             });
           });
@@ -79,74 +67,47 @@ module.exports = function(configuration) {
               next(error);
             }
             translated[key] = data;
-            gutil.log(c.green("ORIGINAL", original[key]));
-            gutil.log(c.green("TRANSLATED", translated[key]));
+            gutil.log(c.blue('[orignal string]:', original[key]));
+            gutil.log(c.yellow('[translated string]:', translated[key]));
             next();
           });
         });
       }
     });
 
-    //Execute the translation tasks and send the buffered file downstream
     async.series(translateTasks, function(error, res) {
       if (error) {
         gutil.log(c.red(error));
         return;
       } else {
-        return translated;
+        var filesource = configuration.dest + '/language-' + language + '_' + language.toUpperCase() + '.json';
+        fs.writeFile(filesource, JSON.stringify(translated, null, 2), function(error) {
+          if (error) {
+            gutil.log(c.red('Error: ', error));
+          } else {
+            gutil.log(c.green('Translated file saved to: ', filesource));
+            return;
+          }
+        });
       }
     });
   }
 
-  return through.obj(function (file, encoding, callback) {
-    if (file.isNull()) {
-      this.push(file);
-      callback(null, file);
-      return;
+  function translateFiles(){
+    if (!configuration) {
+      throw new gutil.PluginError(pluginName, "No configuration supplied");
     }
-    if (file.isStream()) {
-      this.emit('error', new PluginError(pluginName, 'Streams not supported!'));
-    } else if (file.isBuffer()) {
-      try {
-        //translateFile(file); //Writes wrong file.
-        //file.contents = translateFile(file); //Writes wrong file.
-        //file.contents = new Buffer(translateFile(file)); //Writes no file.
-
-        for (var i = 0; i <= configuration.languages.length; i++) {
-
-          //var sourceMapPath = path.join(file.base, destPath, file.relative) + '.map';
-
-          // console.log(file.cwd);
-          // console.log(file.base);
-          // console.log(file.path);
-          // console.log(path.basename(file.path));
-          // console.log(file.relative);
-
-          console.log('gets here..............[1]');
-
-          var translatedFile = new File({
-            cwd: file.cwd,
-            base: file.base,
-            path: path.join(file.base, configuration.dest, file.relative) + '.json',
-            // contents: new Buffer(JSON.stringify(translateFile(file))),
-            contents: new Buffer(translateFile(file))
-          });
-
-          console.log('gets here..............[2]');
-
-          console.log(translatedFile);
-
-          console.log('gets here..............[3]');
-
-          this.push(translatedFile);
-        }
-      } catch (error) {
-        this.emit('error', error);
-        return callback();
-      }
+    try {
+      fs.readFile(configuration.src, 'utf8', function(error, fileContents){
+        async.eachSeries(configuration.languages, function(language, callback) {
+          translateFile(fileContents, language);
+          callback();
+        });
+      });
+    } catch (error) {
+      gutil.log(c.red('Error: ', error));
     }
+  }
 
-    //this.push(file);
-    callback();
-  });
+  translateFiles();
 };

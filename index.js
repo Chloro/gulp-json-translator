@@ -65,7 +65,7 @@ module.exports = function(configuration) {
                 callback(error);
               }
               translated[key][nested] = data;
-              gutil.log(c.blue("[orignal string]:", original[key][nested]));
+              gutil.log(c.blue("[original string]:", original[key][nested]));
               gutil.log(c.yellow("[translated string]:", translated[key][nested]));
               callback();
             });
@@ -80,7 +80,7 @@ module.exports = function(configuration) {
               next(error);
             }
             translated[key] = data;
-            gutil.log(c.blue('[orignal string]:', original[key]));
+            gutil.log(c.blue('[original string]:', original[key]));
             gutil.log(c.yellow('[translated string]:', translated[key]));
             next();
           });

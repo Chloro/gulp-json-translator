@@ -41,7 +41,7 @@ var msTranslator = require('mstranslator');
 // };
 
 module.exports = function(configuration) {
-  if (!configuration.clientIds[0] || !configuration.clientIds[0].clientId || configuration.clientIds[0].secret) {
+  if (!configuration.clientIds[0] || !configuration.clientIds[0].clientId || !configuration.clientIds[0].secret) {
     throw new gutil.PluginError(pluginName, "Invalid configuration supplied");
   }
 

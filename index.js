@@ -7,8 +7,20 @@ var msTranslator = require('mstranslator');
 
 // Example of configuration:
 // var configuration = {
-//   clientId: 'example',
-//   clientSecret: 'example',
+//   clientIds: [
+//     {
+//       clientId: 'clientId1',
+//       secret: 'clientSecret1'
+//     },
+//     {
+//       id: 'clientId2',
+//       secret: 'clientSecret2'
+//     },
+//     {
+//       id: 'clientId2',
+//       secret: 'clientSecret2'
+//     }
+//   ],
 //   locales: [
 //       {
 //         name: 'Egyptian Arabic',
@@ -29,14 +41,15 @@ var msTranslator = require('mstranslator');
 // };
 
 module.exports = function(configuration) {
-  if (!configuration.clientId || !configuration.clientSecret) {
+  if (!configuration.clientIds[0] || !configuration.clientIds[0].clientId || configuration.clientIds[0].secret) {
     throw new gutil.PluginError(pluginName, "Invalid configuration supplied");
   }
 
   var getClass = {}.toString;
+  var randomClient = configuration.clientIds[Math.floor(Math.random()*configuration.clientIds.length)];
   var client = new msTranslator({
-    client_id: configuration.clientId,
-    client_secret: configuration.clientSecret
+    client_id: randomClient.clientId,
+    client_secret: randomClient.secret
   }, true);
 
   function translateFile(fileContents, locale) {

@@ -1,6 +1,6 @@
 {
   "name": "gulp-json-translator",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Module used to translate json files into another language using the microsoft translator api.",
   "main": "index.js",
   "repository": "https://github.com/Chloro/gulp-json-translator",

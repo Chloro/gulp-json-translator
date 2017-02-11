@@ -75,7 +75,7 @@ var configuration = {
   dest: '/app/languages/languages/'
 };
 
-jsonTranslate(configuration);
+translateJson(configuration);
 
 ```
 

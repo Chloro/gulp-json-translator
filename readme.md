@@ -16,7 +16,7 @@ You will need to register with Microsoft for a free Azure account and add the tr
 order to get your free clientId and secret which are needed to access the api.
 `https://azure.microsoft.com/en-us/services/cognitive-services/translator-text-api/`
 
-## Note
+## Notes
 
 Despite the name, this could be used without gulp. The initial intention was to use gulp streams to accomplish the
 translations but I never got around to it. If you have time and want to put up a PR I gladly welcome it. Please note
@@ -31,9 +31,9 @@ This module was originally built to be used with angular-translate, and works se
 
 ```json
 {
-    sentence: "This is a sentence"
-    namespace: {
-        sentenceTwo: "This is a name spaced sentence"
+    "sentence": "This is a sentence"
+    "namespace": {
+        "sentenceTwo": "This is a name spaced sentence"
     }
 }
 ```
@@ -84,9 +84,9 @@ This will result in two files:
 
 ```json
 {
-    sentence: "وهذا حكم"
-    namespace: {
-        sentenceTwo: "وهذا حكم باسم متباعدة"
+    "sentence": "وهذا حكم"
+    "namespace": {
+        "sentenceTwo": "وهذا حكم باسم متباعدة"
     }
 }
 ```
@@ -96,9 +96,9 @@ and
 
 ```json
 {
-    sentence: "Dies ist ein Satz"
-    namespace: {
-        sentenceTwo: "Dies ist ein Name Abstand Satz"
+    "sentence": "Dies ist ein Satz"
+    "namespace": {
+        "sentenceTwo": "Dies ist ein Name Abstand Satz"
     }
 }
 ```

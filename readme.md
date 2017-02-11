@@ -31,7 +31,7 @@ This module was originally built to be used with angular-translate, and works se
 
 ```json
 {
-    "sentence": "This is a sentence"
+    "sentence": "This is a sentence",
     "namespace": {
         "sentenceTwo": "This is a name spaced sentence"
     }
@@ -84,7 +84,7 @@ This will result in two files:
 
 ```json
 {
-    "sentence": "وهذا حكم"
+    "sentence": "وهذا حكم",
     "namespace": {
         "sentenceTwo": "وهذا حكم باسم متباعدة"
     }
@@ -96,7 +96,7 @@ and
 
 ```json
 {
-    "sentence": "Dies ist ein Satz"
+    "sentence": "Dies ist ein Satz",
     "namespace": {
         "sentenceTwo": "Dies ist ein Name Abstand Satz"
     }

@@ -23,14 +23,10 @@ var msTranslator = require('mstranslator');
 //   ],
 //   locales: [
 //       {
-//         name: 'Egyptian Arabic',
-//         localeCode: 'ar-eg',
 //         langCode: 'ar_EG',
 //         lang: 'ar'
 //       },
 //       {
-//         name: 'German',
-//         localeCode: 'de-de',
 //         langCode: 'de_DE',
 //         lang: 'de'
 //       }
